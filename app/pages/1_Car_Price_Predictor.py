@@ -4,9 +4,20 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import streamlit as st
+import sys
+
+# Add app directory to path for imports
+app_dir = Path(__file__).parent.parent
+if str(app_dir) not in sys.path:
+    sys.path.insert(0, str(app_dir))
+    
+# Add project root to path for src imports
+project_root = app_dir.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 # project helpers
-from _common import get_artifacts_and_catalog, intfmt, show_version_sidebar
+from app._common import get_artifacts_and_catalog, intfmt, show_version_sidebar
 
 # backend (your existing inference & recommend code)
 from src.inference import (
@@ -236,3 +247,4 @@ if similar_clicked:
             st.dataframe(recs, use_container_width=True)
         except Exception as e:
             st.error(f"Similarity error: {e}")
+

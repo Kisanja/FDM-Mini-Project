@@ -4,8 +4,19 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import streamlit as st
+import sys
 
-from _common import get_artifacts_and_catalog, intfmt, show_version_sidebar
+# Add app directory to path for imports
+app_dir = Path(__file__).parent.parent
+if str(app_dir) not in sys.path:
+    sys.path.insert(0, str(app_dir))
+    
+# Add project root to path for src imports
+project_root = app_dir.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from app._common import get_artifacts_and_catalog, intfmt, show_version_sidebar
 
 # ---------- Page setup ----------
 st.set_page_config(page_title="Recommendations", page_icon="🧭", layout="wide")

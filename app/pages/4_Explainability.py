@@ -2,8 +2,14 @@
 from __future__ import annotations
 from pathlib import Path
 import streamlit as st
+import sys
 
-from _common import show_version_sidebar
+# Add app directory to path for imports
+app_dir = Path(__file__).parent.parent
+if str(app_dir) not in sys.path:
+    sys.path.insert(0, str(app_dir))
+
+from app._common import show_version_sidebar
 
 # ---------- Page setup ----------
 st.set_page_config(page_title="Explainability", page_icon="🔎", layout="wide")
