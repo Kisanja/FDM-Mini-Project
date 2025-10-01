@@ -1,0 +1,31 @@
+{
+  "preprocessing_version": "v1.0-preproc-2025-10-01",
+  "feature_list_hash": "6c89bc15c9",
+  "feature_count": 65,
+  "model_type": "LGBMRegressor",
+  "model_params": {
+    "boosting_type": "gbdt",
+    "class_weight": null,
+    "colsample_bytree": 0.6307919639315172,
+    "importance_type": "split",
+    "learning_rate": 0.03607763076223912,
+    "max_depth": 0,
+    "min_child_samples": 20,
+    "min_child_weight": 0.001,
+    "min_split_gain": 0.0,
+    "n_estimators": 856,
+    "n_jobs": -1,
+    "num_leaves": 76,
+    "objective": null,
+    "random_state": 42,
+    "reg_alpha": 0.04219770393210825,
+    "reg_lambda": 0.1826138281931641,
+    "subsample": 0.6873761748867334,
+    "subsample_for_bin": 200000,
+    "subsample_freq": 0
+  },
+  "train_date": "2025-10-01",
+  "random_seed": 42,
+  "training_rows": 40000,
+  "test_rows": 10000
+}

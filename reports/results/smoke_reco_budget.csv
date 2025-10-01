@@ -1,0 +1,11 @@
+rec_id,PredPriceUser,Brand,Model,Year,Condition,Price($),Mileage(km),EngineSize(L),Horsepower,Doors,Seats,FuelType,Transmission,DriveType,BodyType,Color,Interior,City,similarity
+1040,18000,Tesla,Model 3,2021,Used,18000,11,0.0,399,4,5,electric,automatic,AWD,Sedan,black,cloth,Paris,1.0
+6657,18000,Mercedes-Benz,C-Class,2018,Used,18002,12,2.0,315,4,5,gasoline,automatic,RWD,Sedan,blue,leather,Toronto,1.0
+25407,18000,Audi,A6,2014,Used,18002,12,2.7,285,4,5,diesel,automatic,AWD,Sedan,red,cloth,Cape Town,1.0
+27081,18000,Mercedes-Benz,E-Class,2020,Damaged,17997,11,2.2,289,4,5,diesel,manual,RWD,Sedan,silver,leather,Cape Town,1.0
+31525,18000,Tesla,Model S,2011,Used,17994,12,0.0,835,5,5,electric,automatic,AWD,Sedan,red,cloth,Los Angeles,1.0
+10378,18000,Honda,Accord,2022,Used,18006,11,1.9,251,4,5,hybrid,automatic,FWD,Sedan,white,cloth,Dubai,1.0
+37383,18000,Tesla,Model 3,2018,Used,18006,12,0.0,364,4,5,electric,automatic,RWD,Sedan,black,leather,Tokyo,1.0
+38961,18000,Audi,A6,2015,Used,18007,12,2.0,292,4,5,gasoline,automatic,AWD,Sedan,black,cloth,Los Angeles,1.0
+11279,18000,BMW,5 Series,2014,Used,18008,12,2.9,366,4,5,hybrid,manual,AWD,Sedan,red,cloth,Tokyo,1.0
+8938,18000,Mercedes-Benz,S-Class,2009,Used,18011,12,3.0,503,4,4,gasoline,manual,RWD,Sedan,blue,leather,Sao Paulo,0.999

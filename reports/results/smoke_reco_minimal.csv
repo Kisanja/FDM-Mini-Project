@@ -1,0 +1,11 @@
+rec_id,Brand,Model,Year,Condition,Price($),Mileage(km),EngineSize(L),Horsepower,Doors,Seats,FuelType,Transmission,DriveType,BodyType,Color,Interior,City,similarity
+39971,Tesla,Model S,2005,Used,8500,13,0.0,848,5,5,electric,automatic,AWD,Sedan,silver,cloth,Delhi,0.03
+28718,Tesla,Model S,2005,Used,8172,13,0.0,848,5,5,electric,automatic,AWD,Sedan,gray,cloth,Berlin,0.03
+33859,Tesla,Model S,2005,Used,8610,13,0.0,848,5,5,electric,automatic,AWD,Sedan,black,leather,Sao Paulo,0.03
+13762,Tesla,Model S,2005,Used,8521,13,0.0,848,5,5,electric,automatic,AWD,Sedan,red,leather,Tokyo,0.03
+36582,Tesla,Model S,2005,Used,7461,13,0.0,848,5,5,electric,automatic,AWD,Sedan,black,leather,Delhi,0.03
+3826,Tesla,Model S,2005,Used,8453,13,0.0,842,5,5,electric,automatic,AWD,Sedan,silver,cloth,Toronto,0.03
+3217,Tesla,Model S,2005,Used,8384,13,0.0,837,5,5,electric,automatic,AWD,Sedan,silver,leather,Berlin,0.03
+34366,Tesla,Model S,2005,Used,8462,13,0.0,832,5,5,electric,automatic,AWD,Sedan,red,leather,Sao Paulo,0.03
+6841,Tesla,Model S,2005,Used,8550,13,0.0,826,5,5,electric,automatic,AWD,Sedan,gray,cloth,Tehran,0.03
+25615,Tesla,Model S,2005,Used,7800,13,0.0,820,5,5,electric,automatic,AWD,Sedan,blue,cloth,Tehran,0.03
