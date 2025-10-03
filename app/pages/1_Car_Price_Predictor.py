@@ -5,6 +5,10 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import sys
+import plotly.express as px
+import plotly.graph_objects as go
+import time
+from datetime import datetime
 
 # Add app directory to path for imports
 app_dir = Path(__file__).parent.parent
@@ -124,6 +128,56 @@ def compute_segment_stats(_cat: pd.DataFrame, _art: dict) -> pd.DataFrame:
     return grp
 
 seg_stats = compute_segment_stats(cat, art)
+
+# ---------------------------------------------------------------------
+# Smart Defaults and Validation
+# ---------------------------------------------------------------------
+@st.cache_data(show_spinner=False)
+def get_popular_choices(_cat: pd.DataFrame) -> dict:
+    """Get most common values for smart defaults"""
+    return {
+        "brands": _cat["Brand"].value_counts().head(20).index.tolist(),
+        "models_by_brand": _cat.groupby("Brand")["Model"].apply(lambda x: x.value_counts().head(10).index.tolist()).to_dict(),
+        "cities": _cat["City"].value_counts().head(15).index.tolist(),
+        "year_range": (int(_cat["Year"].min()), int(_cat["Year"].max())),
+        "price_range": (int(_cat["Price($)"].min()), int(_cat["Price($)"].max())),
+        "fuel_types": _cat["FuelType"].value_counts().index.tolist()[:4],
+        "body_types": _cat["BodyType"].value_counts().index.tolist()[:6],
+        "conditions": _cat["Condition"].value_counts().index.tolist(),
+    }
+
+def validate_inputs(user_input: dict) -> tuple[bool, list[str]]:
+    """Validate user inputs and return (is_valid, error_messages)"""
+    errors = []
+    warnings = []
+    
+    # Current year validation
+    current_year = 2025
+    if user_input["Year"] > current_year:
+        errors.append(f"Year cannot be in the future (max: {current_year})")
+    
+    # Mileage vs Year logic
+    age = current_year - user_input["Year"]
+    max_reasonable_mileage = age * 25000  # 25k km per year
+    if user_input["Mileage(km)"] > max_reasonable_mileage and age > 0:
+        warnings.append(f"High mileage for a {age}-year-old car (typical max ~{max_reasonable_mileage:,} km)")
+    
+    # Engine size vs body type
+    if user_input["BodyType"] in ["Pickup", "SUV"] and user_input["EngineSize(L)"] < 1.5:
+        warnings.append("Small engine size for large vehicle type")
+    
+    # Horsepower vs engine size
+    hp_per_liter = user_input["Horsepower"] / user_input["EngineSize(L)"]
+    if hp_per_liter > 150:
+        warnings.append("Very high horsepower per liter - this seems like a high-performance vehicle")
+    elif hp_per_liter < 40:
+        warnings.append("Low horsepower per liter - efficiency-focused vehicle")
+    
+    return len(errors) == 0, errors, warnings
+
+choices = get_popular_choices(cat)
+
+# Enhanced prediction display and validation functions\ndef display_enhanced_prediction_results(price, seg, out, similar_cars, seg_avg):\n    \"\"\"Display enhanced prediction results with confidence metrics\"\"\"\n    \n    # Calculate confidence range\n    if not similar_cars.empty:\n        price_std = similar_cars[\"Price($)\"].std()\n        confidence_range = (max(0, price - price_std), price + price_std)\n        \n        # Market position analysis\n        all_similar_prices = similar_cars[\"Price($)\"].tolist() + [price]\n        percentile = (sum(p <= price for p in all_similar_prices) / len(all_similar_prices)) * 100\n    else:\n        confidence_range = (price * 0.9, price * 1.1)\n        percentile = 50\n    \n    delta_str = f\"{'+' if price - seg_avg >= 0 else ''}{intfmt(price - seg_avg)} vs segment avg\" if not np.isnan(seg_avg) else \"n/a\"\n    \n    # Enhanced metrics display\n    m1, m2, m3 = st.columns(3)\n    \n    with m1:\n        st.markdown('<div class=\"metric-card\">', unsafe_allow_html=True)\n        st.markdown(\"<h4>💰 Predicted Price</h4>\", unsafe_allow_html=True)\n        st.markdown(f'<div class=\"big\">${intfmt(price)}</div>', unsafe_allow_html=True)\n        st.markdown(f'<div class=\"muted\">Range: ${intfmt(confidence_range[0])} - ${intfmt(confidence_range[1])}</div>', unsafe_allow_html=True)\n        st.markdown(f'<div class=\"muted\">{delta_str}</div>', unsafe_allow_html=True)\n        st.markdown('</div>', unsafe_allow_html=True)\n    \n    with m2:\n        st.markdown('<div class=\"metric-card\">', unsafe_allow_html=True)\n        st.markdown(\"<h4>📊 Market Segment</h4>\", unsafe_allow_html=True)\n        st.markdown(f'<div class=\"big\">{seg}</div>', unsafe_allow_html=True)\n        st.markdown(f'<div class=\"muted\">Cluster #{out[\"cluster_label\"]} • {percentile:.0f}th percentile</div>', unsafe_allow_html=True)\n        st.markdown('</div>', unsafe_allow_html=True)\n    \n    with m3:\n        st.markdown('<div class=\"metric-card\">', unsafe_allow_html=True)\n        st.markdown(\"<h4>🎯 Market Position</h4>\", unsafe_allow_html=True)\n        if percentile >= 75:\n            position = \"Premium\"\n            emoji = \"🔸\"\n        elif percentile >= 50:\n            position = \"Above Average\"\n            emoji = \"🔹\"\n        elif percentile >= 25:\n            position = \"Average\"\n            emoji = \"🔶\"\n        else:\n            position = \"Budget\"\n            emoji = \"🔷\"\n        st.markdown(f'<div class=\"big\">{emoji} {position}</div>', unsafe_allow_html=True)\n        st.markdown(f'<div class=\"muted\">{len(similar_cars)} similar cars found</div>', unsafe_allow_html=True)\n        st.markdown('</div>', unsafe_allow_html=True)\n    \n    return confidence_range, percentile
 
 # ---------------------------------------------------------------------
 # Input UI
