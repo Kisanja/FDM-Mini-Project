@@ -1,7 +1,7 @@
 {
   "preprocessing_version": "v1.0-preproc-2025-10-01",
-  "feature_list_hash": "6c89bc15c9",
-  "feature_count": 65,
+  "feature_list_hash": "458dd62dc5",
+  "feature_count": 37,
   "model_type": "LGBMRegressor",
   "model_params": {
     "boosting_type": "gbdt",
@@ -24,7 +24,7 @@
     "subsample_for_bin": 200000,
     "subsample_freq": 0
   },
-  "train_date": "2025-10-01",
+  "train_date": "2025-10-04",
   "random_seed": 42,
   "training_rows": 40000,
   "test_rows": 10000
