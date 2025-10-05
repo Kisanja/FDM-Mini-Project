@@ -1,15 +1,9 @@
 streamlit==1.36.0
 pandas==2.2.2
-
-# Core (with manylinux wheels for 3.11)
 numpy==1.26.4
 scipy==1.11.4
-
-# ML
 scikit-learn==1.3.2
 lightgbm==4.3.0
 joblib==1.3.2
-
-# Viz (used in notebooks/audit)
 matplotlib==3.8.4
 seaborn==0.13.2
