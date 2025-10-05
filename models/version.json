@@ -24,7 +24,7 @@
     "subsample_for_bin": 200000,
     "subsample_freq": 0
   },
-  "train_date": "2025-10-04",
+  "train_date": "2025-10-05",
   "random_seed": 42,
   "training_rows": 40000,
   "test_rows": 10000
