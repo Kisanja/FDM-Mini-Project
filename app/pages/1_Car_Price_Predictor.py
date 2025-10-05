@@ -1,67 +1,40 @@
-# app/pages/1_Car_Price_Predictor.py
+# app/1_🚗_Price_Predictor.py
 from __future__ import annotations
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import streamlit as st
 
-# ---- App utilities (already in your repo) ----
 from _common import get_artifacts_and_catalog, intfmt, show_version_sidebar
-
-# ---- Inference (your src/) ----
 from src.inference import (
-    load_artifacts,
     predict_and_cluster,
-    _build_model_features,   # debug only
-    _build_cluster_features, # debug only
+    _build_model_features,      # debug only
+    _build_cluster_features,    # debug only
 )
+
 from src.recommend import similar_items
 
-
-# ======================================================================================
+# -----------------------------
 # Page setup
-# ======================================================================================
+# -----------------------------
 st.set_page_config(page_title="Price Predictor", page_icon="🚗", layout="wide")
-show_version_sidebar()
+show_version_sidebar()  # artifacts block is hidden by default per your updated _common.py
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-
-# ======================================================================================
-# Cached loaders (critical for Streamlit Cloud performance & stability)
-# ======================================================================================
-@st.cache_resource(show_spinner=False)
-def get_artifacts():
-    """Load all model artifacts exactly once per server session."""
-    return load_artifacts()
-
-@st.cache_data(show_spinner=False)
-def get_catalog_and_artifacts():
-    """
-    Your _common.get_artifacts_and_catalog() already loads both.
-    We wrap it with cache_data so the big DataFrame (catalog) is cached.
-    """
-    art, cat = get_artifacts_and_catalog()
-    # Prefer the resource-cached artifacts (no reloading pkls on page reruns)
-    art = get_artifacts() or art
-    return art, cat
-
-
-# ======================================================================================
-# Load artifacts & catalog (cached)
-# ======================================================================================
-art, cat = get_catalog_and_artifacts()
+# -----------------------------
+# Load artifacts & catalog
+# -----------------------------
+art, cat = get_artifacts_and_catalog()
 st.session_state.setdefault("artifacts", art)
 st.session_state.setdefault("catalog", cat)
 art = st.session_state.artifacts
 cat = st.session_state.catalog
 
-
-# ======================================================================================
+# -----------------------------
 # Styling
-# ======================================================================================
-st.markdown(
-    """
+# -----------------------------
+st.markdown("""
 <style>
 :root { --primary:#667eea; --secondary:#764ba2; }
 .hero{
@@ -78,37 +51,26 @@ st.markdown(
 .metric-card .big{ font-size:1.6rem; font-weight:800; margin-top:.25rem; color:#0f172a; }
 .muted{ color:#64748b; font-size:.9rem; }
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-st.markdown(
-    """
+st.markdown("""
 <div class="hero">
   <h1>🏷️ Car Price Prediction</h1>
   <p>We estimate price and determine the market segment using our saved K-Means model.</p>
 </div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-
-# ======================================================================================
-# Helper: assign K-Means segment to catalog once (cached)
-# ======================================================================================
+# -----------------------------
+# Helper: assign K-Means segment to catalog once
+# -----------------------------
 @st.cache_data(show_spinner=False)
 def kmeans_segment_summary(_catalog: pd.DataFrame, _art: dict) -> pd.DataFrame:
-    """
-    Adds the K-Means segment names to the catalog and pre-computes the
-    average price per segment for fast lookup.
-    """
-    feats = _art["kmeans_features"]           # e.g. ["Mileage(km)","Year","Horsepower","EngineSize(L)"]
+    feats = _art["kmeans_features"]           # e.g., ["Mileage(km)","Year","Horsepower","EngineSize(L)"]
     scaler = _art["kmeans_scaler"]
     km     = _art["kmeans"]
     label_map = _art.get("kmeans_label_map", {})
 
     Xc = _catalog[feats].apply(pd.to_numeric, errors="coerce")
-
     # Use scaler means for any missing values (vectors must be valid)
     means = pd.Series(getattr(scaler, "mean_", np.nan), index=feats)
     Xc = Xc.fillna(means)
@@ -118,21 +80,16 @@ def kmeans_segment_summary(_catalog: pd.DataFrame, _art: dict) -> pd.DataFrame:
 
     df = _catalog.copy()
     df["Segment"] = names
-    seg_avg = (
-        df.groupby("Segment", as_index=False)["Price($)"]
-          .mean()
-          .rename(columns={"Price($)": "avg_price"})
-    )
+    # Pre-compute average price per segment for quick lookup
+    seg_avg = df.groupby("Segment", as_index=False)["Price($)"].mean().rename(columns={"Price($)":"avg_price"})
     return seg_avg  # columns: Segment, avg_price
 
 seg_summary = kmeans_segment_summary(cat, art)  # cached
 
-
-# ======================================================================================
-# Inputs — EXACT 14 FEATURES (aligned with your training)
-# ======================================================================================
+# -----------------------------
+# Inputs — EXACT 14 FEATURES
+# -----------------------------
 st.subheader("Required basics")
-
 c1, c2, c3 = st.columns(3)
 with c1:
     brand = st.text_input("Brand", "Toyota")
@@ -153,11 +110,7 @@ with oc2:
     trans = st.selectbox("Transmission", ["Automatic", "Manual"], index=0)
 with oc3:
     drive = st.selectbox("Drive Type", ["FWD", "RWD", "AWD"], index=0)
-    body = st.selectbox(
-        "Body Type",
-        ["Sedan", "Hatchback", "SUV", "Coupe", "Pickup", "Convertible"],
-        index=0,
-    )
+    body = st.selectbox("Body Type", ["Sedan", "Hatchback", "SUV", "Coupe", "Pickup", "Convertible"], index=0)
 
 c4, c5 = st.columns(2)
 with c4:
@@ -167,20 +120,11 @@ with c5:
 
 # Build payload (ONLY the 14 kept features)
 user = {
-    "Brand": brand,
-    "Model": model,
-    "Year": int(year),
-    "Condition": condition,
-    "Mileage(km)": int(mileage),
-    "EngineSize(L)": float(engine),
-    "FuelType": fuel,
-    "Horsepower": int(hp),
-    "Torque": int(torque),
-    "Transmission": trans,
-    "DriveType": drive,
-    "BodyType": body,
-    "FuelEfficiency(L/100km)": float(fe),
-    "AccidentHistory": accident,
+    "Brand": brand, "Model": model, "Year": int(year), "Condition": condition,
+    "Mileage(km)": int(mileage), "EngineSize(L)": float(engine), "FuelType": fuel,
+    "Horsepower": int(hp), "Torque": int(torque), "Transmission": trans,
+    "DriveType": drive, "BodyType": body,
+    "FuelEfficiency(L/100km)": float(fe), "AccidentHistory": accident
 }
 
 left, right = st.columns([1, 1.2])
@@ -190,16 +134,15 @@ with left:
 with right:
     similar_clicked = st.button("🔍 Show similar cars (top 10)", use_container_width=True)
 
-
-# ======================================================================================
+# -----------------------------
 # Predict & display (K-MEANS ONLY)
-# ======================================================================================
+# -----------------------------
 if predict_clicked:
     try:
-        out = predict_and_cluster(user, art)  # price via LightGBM; segment via saved K-Means
-        price  = float(out["predicted_price"])
-        seg_km = str(out["cluster_name"])
-        seg_id = int(out["cluster_label"])
+        out = predict_and_cluster(user, art)  # price via model; segment via saved K-Means
+        price   = float(out["predicted_price"])
+        seg_km  = str(out["cluster_name"])
+        seg_id  = int(out["cluster_label"])
 
         # Segment average price based on K-Means segment in catalog
         seg_row = seg_summary.loc[seg_summary["Segment"] == seg_km]
@@ -243,10 +186,9 @@ if predict_clicked:
     except Exception as e:
         st.error(f"Prediction error: {e}")
 
-
-# ======================================================================================
+# -----------------------------
 # Similar cars
-# ======================================================================================
+# -----------------------------
 if similar_clicked:
     if "last_user_input" not in st.session_state:
         st.warning("Run a prediction first.")
