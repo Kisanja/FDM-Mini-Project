@@ -1,22 +1,25 @@
 # app/4_🔎_Explainability.py
 from __future__ import annotations
 from pathlib import Path
-import streamlit as st
 import sys
+import inspect
+import streamlit as st
 
-# Add app directory to path for imports
-app_dir = Path(__file__).parent.parent
-if str(app_dir) not in sys.path:
-    sys.path.insert(0, str(app_dir))
+# ---------- Imports / paths ----------
+# allow "from _common import ..." when this page runs inside /app/pages
+APP_DIR = Path(__file__).resolve().parent.parent  # <repo>/app
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
 
-from app._common import show_version_sidebar
+from _common import show_version_sidebar  # noqa: E402
 
 # ---------- Page setup ----------
 st.set_page_config(page_title="Explainability", page_icon="🔎", layout="wide")
 show_version_sidebar()
 
-# ---------- Styling (same vibe as other pages) ----------
-st.markdown("""
+# ---------- Styling ----------
+st.markdown(
+    """
 <style>
 :root { --primary:#667eea; --secondary:#764ba2; }
 .hero{
@@ -33,37 +36,56 @@ st.markdown("""
 }
 .small{ color:#64748b; font-size:.92rem; }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-st.markdown("""
+st.markdown(
+    """
 <div class="hero">
   <h1>🔎 Model Explainability</h1>
   <p>See which features matter most and why some columns were dropped or excluded.</p>
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-# ---------- Find <project_root>/reports/figures robustly ----------
-this_file = Path(__file__).resolve()
-candidates = [
-    this_file.parent.parent,  # <repo>/
-    this_file.parent,         # <repo>/app/
-    Path.cwd(),               # current working dir
+# ---------- Resolve <project_root>/reports/figures ----------
+THIS_FILE = Path(__file__).resolve()
+CANDIDATES = [
+    APP_DIR.parent,      # <repo>/
+    APP_DIR,             # <repo>/app/
+    Path.cwd(),          # working dir
 ]
 FIG_DIR = None
-for root in candidates:
+for root in CANDIDATES:
     p = root / "reports" / "figures"
     if p.exists():
         FIG_DIR = p
         break
-# final fallback: repo-wide search
 if FIG_DIR is None:
-    hits = list(this_file.parents[2].rglob("reports/figures"))
+    hits = list(THIS_FILE.parents[2].rglob("reports/figures"))
     if hits:
         FIG_DIR = hits[0]
 
-st.caption(f"Figures folder resolved to: `{FIG_DIR}` | Exists? **{bool(FIG_DIR and FIG_DIR.exists())}**")
+st.caption(
+    f"Figures folder resolved to: `{FIG_DIR}` | Exists? **{bool(FIG_DIR and FIG_DIR.exists())}**"
+)
 
-# ---------- Show importance figures if present ----------
+# ---------- Streamlit image kw compatibility ----------
+def _img_fit_kw() -> dict:
+    """
+    Streamlit changed `use_column_width` -> `use_container_width` in newer versions.
+    Detect what's available so this page works everywhere.
+    """
+    params = inspect.signature(st.image).parameters
+    if "use_container_width" in params:
+        return dict(use_container_width=True)
+    if "use_column_width" in params:
+        return dict(use_column_width=True)
+    return {}
+
+# ---------- Show importance figures ----------
 st.subheader("Feature Importance")
 
 files = [
@@ -76,7 +98,7 @@ if FIG_DIR and FIG_DIR.exists():
     for fname, title in files:
         path = FIG_DIR / fname
         if path.exists():
-            st.image(str(path), caption=title, use_container_width=True)
+            st.image(str(path), caption=title, **_img_fit_kw())
             found_any = True
 
 if not found_any:
@@ -89,8 +111,10 @@ if not found_any:
 
 st.markdown("---")
 st.subheader("Why certain columns were dropped/excluded")
-st.markdown("""
+st.markdown(
+    """
 - **CarAge** was dropped as redundant with `Year` (they’re perfectly collinear: `CarAge = current_year − Year`).
 - **PricePerKm** was **excluded from training** to prevent **data leakage** because it’s derived from the target (`Price($) ÷ Mileage(km)`).
 - Free-text **Options** were engineered into numeric signals (`OptionsCount` plus one-hot `opt_*` flags) so the model can use them.
-""")
+"""
+)
