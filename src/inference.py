@@ -1,13 +1,54 @@
 # src/inference.py
 from __future__ import annotations
 
+"""
+Inference/Clustering utilities.
+
+Key change for Streamlit Cloud reliability:
+- We *attempt* to import joblib but fall back to pickle automatically.
+  This prevents ModuleNotFoundError at import-time on environments that
+  don't have joblib wheels for the selected Python version.
+- All model loads go through a single _load_pickle() helper.
+
+Public API preserved:
+  - load_artifacts(...)
+  - predict_price(...)
+  - assign_cluster(...)
+  - predict_and_cluster(...)
+  - _build_model_features(...)        # used by your pages (debug/visibility)
+  - _build_cluster_features(...)      # used by your pages
+"""
+
 from pathlib import Path
 from typing import Any, Dict, Tuple
 import json
 
 import numpy as np
 import pandas as pd
-import joblib
+
+# -------------------------
+# Safe (deferred) pickle/joblib loader
+# -------------------------
+# Prefer joblib (faster, handles memmaps), but never fail import-time if it's missing.
+# If joblib isn't available, fall back to stdlib pickle.
+try:
+    import joblib as _joblib  # type: ignore
+    _HAVE_JOBLIB = True
+
+    def _load_pickle(path: Path) -> Any:
+        # joblib can read both .pkl and .joblib created by joblib.dump
+        return _joblib.load(path)
+
+except Exception:
+    import pickle as _pickle  # type: ignore
+    _HAVE_JOBLIB = False
+
+    def _load_pickle(path: Path) -> Any:
+        # Works for most sklearn artifacts saved via joblib (they're pickled under the hood).
+        # If an artifact truly requires joblib (e.g., memmap arrays), this will raise;
+        # we catch and re-raise with a clear message where needed.
+        with open(path, "rb") as f:
+            return _pickle.load(f)
 
 
 # -------------------------
@@ -38,16 +79,31 @@ def _read_json(path: Path) -> Dict[str, Any]:
         return json.load(f)
 
 
-def _safe_joblib(path: Path):
+def _safe_load_artifact(path: Path) -> Any | None:
     """
-    Return joblib.load(path) or None if the file is missing.
+    Load an artifact if the file exists; return None if missing.
+    Raises a clear error if loading fails due to incompatible serialization.
     """
-    return joblib.load(path) if path.exists() else None
+    if not path.exists():
+        return None
+    try:
+        return _load_pickle(path)
+    except Exception as e:
+        # Provide an actionable error message with context.
+        hint = (
+            "This artifact could not be loaded. If it was saved using joblib with memmapped arrays, "
+            "ensure 'joblib' is installed on the deployment (or re-save as a plain pickle)."
+        )
+        raise RuntimeError(f"Failed to load artifact: {path.name}. {_loader_summary()} | {hint}") from e
 
 
 def _ensure_present(obj, need: str):
     if obj is None:
         raise RuntimeError(f"{need} not found. Please ensure it is saved in app/models/.")
+
+
+def _loader_summary() -> str:
+    return f"joblib_available={_HAVE_JOBLIB}"
 
 
 # -------------------------
@@ -71,14 +127,14 @@ def load_artifacts(project_root: Path | None = None) -> Dict[str, Any]:
     models_dir = _find_models_dir(root)
 
     # Core
-    model = _safe_joblib(models_dir / "lightgbm_model.pkl")
+    model = _safe_load_artifact(models_dir / "lightgbm_model.pkl")
     feature_meta = _read_json(models_dir / "feature_columns.json")
     feature_columns = feature_meta.get("columns", [])
 
     # Optional
     model_freq_map = _read_json(models_dir / "model_freq_map.json")
-    kmeans = _safe_joblib(models_dir / "kmeans.pkl")
-    kmeans_scaler = _safe_joblib(models_dir / "kmeans_scaler.pkl")
+    kmeans = _safe_load_artifact(models_dir / "kmeans.pkl")
+    kmeans_scaler = _safe_load_artifact(models_dir / "kmeans_scaler.pkl")
     km_meta = _read_json(models_dir / "kmeans_features.json")
     kmeans_features = km_meta.get("features", [])
     kmeans_label_map = km_meta.get("label_map", {})
@@ -98,7 +154,8 @@ def load_artifacts(project_root: Path | None = None) -> Dict[str, Any]:
         "kmeans_features": kmeans_features,
         "kmeans_label_map": kmeans_label_map,
         "price_bins": price_bins,
-        "models_dir": str(models_dir),  # helpful for debugging
+        "models_dir": str(models_dir),            # helpful for debugging
+        "joblib_available": _HAVE_JOBLIB,         # surface loader state for UI/debug
     }
 
 
