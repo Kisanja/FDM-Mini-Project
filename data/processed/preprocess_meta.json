@@ -1,36 +1,37 @@
 {
-  "top_options": [
-    "cruise control",
-    "navigation",
-    "heated seats",
-    "parking sensors",
-    "touchscreen",
-    "bluetooth",
-    "sunroof",
-    "rear camera"
-  ],
-  "winsor_cutoffs": {
-    "Price($)": {
-      "q01": 1492.99,
-      "q99": 85854.33000000007
-    },
-    "Mileage(km)": {
-      "q01": 202.0,
-      "q99": 303929.03
-    },
-    "Horsepower": {
-      "q01": 67.0,
-      "q99": 848.0
-    },
-    "EngineSize(L)": {
-      "q01": 0.0,
-      "q99": 4.9
-    },
-    "FuelEfficiency(L/100km)": {
-      "q01": 0.0,
-      "q99": 17.800100000000022
-    }
-  },
   "seed": 42,
-  "test_size": 0.2
+  "test_size": 0.2,
+  "kept_columns": [
+    "BodyType",
+    "Brand",
+    "Condition",
+    "DriveType",
+    "EngineSize(L)",
+    "FuelEfficiency(L/100km)",
+    "FuelType",
+    "Horsepower",
+    "Mileage(km)",
+    "Model",
+    "Price($)",
+    "Torque",
+    "Transmission",
+    "Year"
+  ],
+  "dropped_columns": [
+    "AccidentHistory"
+  ],
+  "normalization": {
+    "FuelType": "kept/raw",
+    "Transmission": "kept/raw"
+  },
+  "log_transform": {
+    "columns": [
+      "Horsepower"
+    ]
+  },
+  "notes": [
+    "CarAge dropped as redundant with Year",
+    "PricePerKm excluded from modeling to avoid leakage",
+    "Options text features removed per evaluation feedback (kept core 14 columns)"
+  ]
 }

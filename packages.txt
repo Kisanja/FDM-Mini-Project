@@ -1,0 +1,6 @@
+gfortran
+liblapack-dev
+libopenblas-dev
+pkg-config
+cmake
+libgomp1

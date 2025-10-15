@@ -1,4 +1,4 @@
-Segment,Mileage(km),Year,Horsepower,EngineSize(L)
-Luxury,9.54,2022.84,5.45,1.95
-Mid-range,11.98,2013.16,5.92,3.2
-Budget,12.1,2012.07,5.16,1.39
+Segment,Mileage(km),Year,Horsepower,EngineSize(L),Price($)
+Budget,223888.06,2010.08,5.17,1.41,3911.5
+Mid-range,201128.53,2011.59,5.94,3.28,11407.0
+Luxury,60195.09,2020.98,5.45,1.98,17955.0

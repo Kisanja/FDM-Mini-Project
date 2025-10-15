@@ -1,0 +1,5 @@
+{
+  "q33": 15000,
+  "q66": 30000,
+  "note": "Static demo cutoffs chosen for presentation. Documented in preprocess_meta.json."
+}
